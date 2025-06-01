@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>កាលវិភាគប្រចាំសប្ដាហ៍</title>
+  <link href="https://fonts.googleapis.com/css2?family=Hanuman&family=Koulen&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    body {
+      font-family: 'Hanuman', serif;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+
+    .title {
+      text-align: center;
+      font-family: 'Koulen', cursive;
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #1b5e20;
+    }
+
+    .buttons {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .buttons button {
+      background: #2e7d32;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      margin: 0 6px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Hanuman', serif;
+    }
+
+    .buttons button:hover {
+      background: #1b5e20;
+    }
+
+    .schedule {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .cell {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-family: 'Hanuman', serif;
+    }
+
+    .header {
+      background-color: #1b5e20;
+      color: white;
+      font-weight: light;
+      font-family: 'Koulen', cursive;
+    }
+
+    .time {
+      background-color: #388e3c;
+      color: white;
+      font-weight: light;
+    }
+
+    @media(max-width: 768px) {
+      .schedule {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .cell {
+        font-size: 13px;
+        padding: 8px;
+        min-height: 60px;
+      }
+
+      .title {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="title">តារាងកាលវិភាគប្រចាំសប្ដាហ៍</div>
+
+  <div class="buttons">
+    <button onclick="exportCSV()">ទាញយក CSV</button>
+    <button onclick="exportPNG()">ទាញយក PNG</button>
+    <button onclick="window.print()">បោះពុម្ព</button>
+  </div>
+
+  <div class="schedule" id="scheduleGrid"></div>
+
+  <script>
+    const headers = ["ម៉ោង", "ចន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍", "អាទិត្យ"];
+    const data = [
+      ["7:00 – 11:00", "Call", "Call", "Call", "Call", "Call", "Call", "សម្រាក"],
+      ["12:00 – 1:00", "Follow up ភ្ញៀវឱ្យចូលរួមកម្មវិធី", "Follow up ភ្ញៀវឱ្យចូលរួមកម្មវិធី", "Follow up ភ្ញៀវឱ្យចូលរួមកម្មវិធី", "Follow up ភ្ញៀវឱ្យចូលរួមកម្មវិធី", "Follow up ភ្ញៀវឱ្យចូលរួមកម្មវិធី", "Follow up ភ្ញៀវឱ្យចូលរួមកម្មវិធី", "អាហារថ្ងៃត្រង់"],
+      ["1:00 – 2:00", "ត្រៀមខ្លួនចូលរួមបទបង្ហាញ", "ត្រៀមខ្លួនចូលរួមបទបង្ហាញ", "ត្រៀមខ្លួនចូលរួមបទបង្ហាញ", "ត្រៀមខ្លួនចូលរួមបទបង្ហាញ", "ត្រៀមខ្លួនចូលរួមបទបង្ហាញ", "ត្រៀមខ្លួនចូលរួមបទបង្ហាញ", "ត្រៀមខ្លួនសម្រាប់កម្មវិធី BOP"],
+      ["2:00 – 4:00", "ស្តាប់បទបង្ហាញ", "ស្តាប់បទបង្ហាញ", "ស្តាប់បទបង្ហាញ", "ស្តាប់បទបង្ហាញ", "ស្តាប់បទបង្ហាញ", "ស្តាប់បទបង្ហាញ", "ចូលរួមកម្មវិធី BOP"],
+      ["4:00 – 6:00", "សម្រាក & អាហារពេលល្ងាច", "សម្រាក & អាហារពេលល្ងាច", "សម្រាក & អាហារពេលល្ងាច", "សម្រាក & អាហារពេលល្ងាច", "សម្រាក & អាហារពេលល្ងាច", "សម្រាក & អាហារពេលល្ងាច", "សម្រាក & អាហារពេលល្ងាច"],
+      ["7:00 – 9:00", "បូកសរុបលទ្ធផល", "បូកសរុបលទ្ធផល", "បូកសរុបលទ្ធផល", "បូកសរុបលទ្ធផល", "បូកសរុបលទ្ធផល", "បូកសរុបលទ្ធផល", "បូកសរុបលទ្ធផល ទទួលយកផែនការថ្មីសម្រាប់សប្តាហ៍ក្រោយ"]
+    ];
+
+    const container = document.getElementById('scheduleGrid');
+
+    headers.forEach(h => {
+      const cell = document.createElement('div');
+      cell.className = 'cell header';
+      cell.textContent = h;
+      container.appendChild(cell);
+    });
+
+    data.forEach(row => {
+      row.forEach((value, index) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        if (index === 0) cell.classList.add('time');
+        cell.textContent = value;
+        container.appendChild(cell);
+      });
+    });
+
+    function exportCSV() {
+      const csv = [headers.join(",")];
+      data.forEach(row => {
+        csv.push(row.map(text => `"${text}"`).join(","));
+      });
+
+      const blob = new Blob([csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'schedule.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportPNG() {
+      html2canvas(document.getElementById("scheduleGrid")).then(canvas => {
+        const a = document.createElement("a");
+        a.href = canvas.toDataURL("image/png");
+        a.download = "schedule.png";
+        a.click();
+      });
+    }
+  </script>
+</body>
+</html>
